@@ -31,6 +31,17 @@ function RootNavigator() {
         {/* Screens only a logged-in user can open */}
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="categories"
+            options={{
+              headerShown: true,
+              title: "Manage Categories",
+              headerStyle: { backgroundColor: colors.header },
+              headerTintColor: "#FFFFFF",
+              headerTitleStyle: { fontWeight: "700" },
+            }}
+          />
+          
         </Stack.Protected>
 
         {/* Screens only a logged-out user can open */}
