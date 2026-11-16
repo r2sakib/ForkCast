@@ -25,6 +25,24 @@ function TabsNavigator() {
         }}
       />
       {/* ---------- END MEMBER 3 ---------- */}
+      <Tabs.Screen
+  name="statistics"
+  options={{
+    title: "Statistics",
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons name="stats-chart-outline" size={size} color={color} />
+    ),
+  }}
+/>
+<Tabs.Screen
+  name="recipes"
+  options={{
+    title: "Recipes",
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons name="restaurant-outline" size={size} color={color} />
+    ),
+  }}
+/>
     </Tabs>
   );
 }
@@ -36,3 +54,4 @@ export default function TabLayout() {
     </NotificationsProvider>
   );
 }
+
