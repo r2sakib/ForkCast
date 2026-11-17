@@ -144,10 +144,15 @@ export async function searchProducts(query: string): Promise<OffProduct[]> {
 }
 
 // One readable sentence for the screen
+// One readable sentence for the screen
 export function getOffErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     if (!error.response) {
-      return "Cannot reach Open Food Facts. Check your internet connection.";
+      // In a browser, a "busy" (503) answer also arrives with no response: OFF's error page
+      // has no CORS header, so the browser hides it. Offline and busy look the same there.
+      return isWeb
+        ? "Open Food Facts did not answer (busy or offline). Try again in a minute, search a barcode, or add the food by hand."
+        : "Cannot reach Open Food Facts. Check your internet connection.";
     }
     if (error.response.status === 429 || error.response.status === 503) {
       return "Open Food Facts is busy right now. Wait a minute and try again.";
