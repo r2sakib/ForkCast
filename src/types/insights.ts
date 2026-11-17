@@ -30,3 +30,4 @@ export interface PantryFood {
   name: string;
   status: "ACTIVE" | "USED" | "WASTED";
 }
+
