@@ -42,7 +42,7 @@ function RootNavigator() {
               headerTitleStyle: { fontWeight: "700" },
             }}
           />
-          
+          <Stack.Screen name="food" />
         </Stack.Protected>
 
         {/* Screens only a logged-out user can open */}
