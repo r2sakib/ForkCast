@@ -6,23 +6,25 @@
 // SAME URLs, JSON and error codes the real NestJS API will use. So the services, contexts
 // and screens do not know the difference, and the final term only has to switch it off.
 import {
-  AxiosError,
-  AxiosHeaders,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
+    AxiosError,
+    AxiosHeaders,
+    AxiosResponse,
+    InternalAxiosRequestConfig,
 } from "axios";
 import {
-  canUseCategory,
-  CATEGORIES_KEY,
-  fail,
-  LocalResult,
-  nextId,
-  ok,
-  readCategories,
-  readTable,
-  StoredCategory,
-  writeTable,
+    canUseCategory,
+    CATEGORIES_KEY,
+    fail,
+    LocalResult,
+    nextId,
+    ok,
+    readCategories,
+    readTable,
+    StoredCategory,
+    writeTable,
 } from "./db";
+
+import { handleFoods } from "./foods";
 
 const USERS_KEY = "forkcast_local_users";
 const DELAY_MS = 400; // pretend network time, so loading spinners are visible
@@ -36,8 +38,16 @@ interface StoredUser {
   password: string;
 }
 
-const publicUser = (u: StoredUser) => ({ id: u.id, name: u.name, email: u.email });
-const publicCategory = (c: StoredCategory) => ({ id: c.id, name: c.name, isCustom: c.userId !== null });
+const publicUser = (u: StoredUser) => ({
+  id: u.id,
+  name: u.name,
+  email: u.email,
+});
+const publicCategory = (c: StoredCategory) => ({
+  id: c.id,
+  name: c.name,
+  isCustom: c.userId !== null,
+});
 
 // The fake token is "local-token-<userId>"
 function userIdFromToken(header: unknown): number | null {
@@ -45,14 +55,15 @@ function userIdFromToken(header: unknown): number | null {
   return match ? Number(match[1]) : null;
 }
 
-const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+const text = (value: unknown) =>
+  typeof value === "string" ? value.trim() : "";
 
 // ── The routes (same rules as Ayan's mock-api/server.js) ──
 async function route(
   method: string,
   path: string,
   body: Record<string, unknown>,
-  authHeader: unknown
+  authHeader: unknown,
 ): Promise<LocalResult> {
   if (method === "get" && path === "/health") return ok(200, { status: "ok" });
 
@@ -66,9 +77,11 @@ async function route(
     const problems: string[] = [];
     if (!name) problems.push("name should not be empty");
     if (!EMAIL_PATTERN.test(email)) problems.push("email must be an email");
-    if (password.length < 6) problems.push("password must be longer than or equal to 6 characters");
+    if (password.length < 6)
+      problems.push("password must be longer than or equal to 6 characters");
     if (problems.length) return fail(400, problems, "Bad Request");
-    if (users.some((u) => u.email === email)) return fail(409, "Email already registered", "Conflict");
+    if (users.some((u) => u.email === email))
+      return fail(409, "Email already registered", "Conflict");
 
     const user: StoredUser = { id: nextId(users), name, email, password };
     await writeTable(USERS_KEY, [...users, user]);
@@ -76,7 +89,9 @@ async function route(
   }
 
   if (method === "post" && path === "/auth/login") {
-    const user = users.find((u) => u.email === text(body.email) && u.password === body.password);
+    const user = users.find(
+      (u) => u.email === text(body.email) && u.password === body.password,
+    );
     if (!user) return fail(401, "Invalid email or password", "Unauthorized");
     return ok(200, { token: `local-token-${user.id}`, user: publicUser(user) });
   }
@@ -92,17 +107,26 @@ async function route(
     const categories = await readCategories();
 
     if (method === "get" && path === "/categories") {
-      return ok(200, categories.filter((c) => canUseCategory(c, me.id)).map(publicCategory));
+      return ok(
+        200,
+        categories.filter((c) => canUseCategory(c, me.id)).map(publicCategory),
+      );
     }
 
     if (method === "post" && path === "/categories") {
       const name = text(body.name);
       if (!name) return fail(400, ["name should not be empty"], "Bad Request");
       const taken = categories.some(
-        (c) => canUseCategory(c, me.id) && c.name.toLowerCase() === name.toLowerCase()
+        (c) =>
+          canUseCategory(c, me.id) &&
+          c.name.toLowerCase() === name.toLowerCase(),
       );
       if (taken) return fail(409, "Category already exists", "Conflict");
-      const category: StoredCategory = { id: nextId(categories), name, userId: me.id };
+      const category: StoredCategory = {
+        id: nextId(categories),
+        name,
+        userId: me.id,
+      };
       await writeTable(CATEGORIES_KEY, [...categories, category]);
       return ok(201, publicCategory(category));
     }
@@ -114,11 +138,18 @@ async function route(
       if (!category || !canUseCategory(category, me.id)) {
         return fail(404, "Category not found", "Not Found");
       }
-      if (category.userId === null) return fail(403, "Default categories cannot be deleted", "Forbidden");
-      await writeTable(CATEGORIES_KEY, categories.filter((c) => c.id !== category.id));
+      if (category.userId === null)
+        return fail(403, "Default categories cannot be deleted", "Forbidden");
+      await writeTable(
+        CATEGORIES_KEY,
+        categories.filter((c) => c.id !== category.id),
+      );
       return ok(204);
     }
   }
+
+  const foodsResult = await handleFoods(method, path, body, me.id);
+  if (foodsResult) return foodsResult;
 
   return fail(404, "Not found", "Not Found");
 }
@@ -129,12 +160,16 @@ async function route(
 let queue: Promise<unknown> = Promise.resolve();
 
 // The Axios adapter: config in, response out (or an AxiosError, exactly like a real server)
-export async function localAdapter(config: InternalAxiosRequestConfig): Promise<AxiosResponse> {
+export async function localAdapter(
+  config: InternalAxiosRequestConfig,
+): Promise<AxiosResponse> {
   const method = (config.method ?? "get").toLowerCase();
   const path = (config.url ?? "").split("?")[0];
   // Axios has already turned the body into a JSON string
   const body: Record<string, unknown> =
-    typeof config.data === "string" && config.data ? JSON.parse(config.data) : (config.data ?? {});
+    typeof config.data === "string" && config.data
+      ? JSON.parse(config.data)
+      : (config.data ?? {});
 
   const run = queue.then(async () => {
     await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
@@ -158,7 +193,7 @@ export async function localAdapter(config: InternalAxiosRequestConfig): Promise<
       AxiosError.ERR_BAD_REQUEST,
       config,
       {},
-      response
+      response,
     );
   }
   return response;
