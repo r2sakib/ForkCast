@@ -1,15 +1,21 @@
 // services/api.ts
 // The one Axios instance for the whole app. Every request goes through it.
 import axios from "axios";
+import { localAdapter } from "./local-backend";
 import { getToken } from "./storage";
 
-// On a real phone "localhost" is the phone itself, so set the laptop's Wi-Fi IP in .env.local
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000/api";
+// Midterm: no backend yet. When EXPO_PUBLIC_API_URL is NOT set, every request is answered
+// on the phone by the local backend (services/local-backend). Final term: put the NestJS
+// address in .env.local and the same requests go to the real server. Nothing else changes.
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "";
+export const USE_LOCAL_BACKEND = API_URL === "";
 
 export const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL || undefined,
   timeout: 10000, // give up after 10 seconds
   headers: { "Content-Type": "application/json" },
+  // The adapter is the part of Axios that sends the request. undefined = the normal network one.
+  adapter: USE_LOCAL_BACKEND ? localAdapter : undefined,
 });
 
 // Before EVERY request: read the token and send it as  Authorization: Bearer <token>
