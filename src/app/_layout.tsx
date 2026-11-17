@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/context/auth-context";
 import { CategoriesProvider } from "@/context/categories-context";
 import { SettingsProvider, useSettings } from "@/context/settings-context";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { FoodsProvider } from "@/context/foods-context";
 
 function RootNavigator() {
   const { status } = useAuth();
@@ -59,7 +60,9 @@ export default function RootLayout() {
     <SettingsProvider>
       <AuthProvider>
         <CategoriesProvider>
-          <RootNavigator />
+          <FoodsProvider>
+            <RootNavigator />
+          </FoodsProvider>
         </CategoriesProvider>
       </AuthProvider>
     </SettingsProvider>
