@@ -23,7 +23,7 @@ import {
     StoredCategory,
     writeTable,
 } from "./db";
-
+import { handleInsights } from "./insights"; // Member 3: /notifications and /foods/stats
 import { handleFoods } from "./foods";
 
 const USERS_KEY = "forkcast_local_users";
@@ -148,6 +148,12 @@ async function route(
     }
   }
 
+  // ── Alerts and statistics (Member 3) ────────────────
+  // Must stay ABOVE the foods block: "/foods/stats" also starts with "/foods/".
+  const insightsResult = await handleInsights(method, path, me.id);
+  if (insightsResult) return insightsResult;
+
+  // ── Foods (Member 1) ────────────────────────────────
   const foodsResult = await handleFoods(method, path, body, me.id);
   if (foodsResult) return foodsResult;
 
