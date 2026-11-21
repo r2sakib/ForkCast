@@ -1,6 +1,6 @@
 // app/(tabs)/recipes.tsx  -  Member 3: recipe suggestions from the food the user has
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { Href, router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -52,7 +52,8 @@ export default function RecipesScreen() {
   );
 
   const openRecipe = (match: RecipeMatch) => {
-    router.push({ pathname: "/recipe/[id]", params: { id: match.recipe.id } });
+    // A string path: it compiles even before the route types know about /recipe/[id]
+    router.push(`/recipe/${match.recipe.id}` as Href);
   };
 
   // Loading state: first load, nothing to show yet
