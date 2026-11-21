@@ -1,6 +1,7 @@
 // context/notifications-context.tsx
 // The alerts for the whole app (Member 3). The Alerts screen and the tab badge both read it.
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import { useExpiryReminders } from "@/hooks/use-expiry-reminders"; // ← NEW (edit 1)
 import { fetchNotifications, markNotificationRead } from "@/services/insights";
 import { AppNotification } from "@/types/insights";
 import { getErrorMessage } from "@/utils/errors";
@@ -25,6 +26,7 @@ interface NotificationsContextValue {
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
+  useExpiryReminders(); // phone reminders follow the food list and Ayan's Reminders switch  ← NEW (edit 2)
   const { user } = useAuth();
   const userId = user?.id;
   const { items: foods } = useFoods();
