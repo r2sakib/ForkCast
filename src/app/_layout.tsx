@@ -44,6 +44,7 @@ function RootNavigator() {
             }}
           />
           <Stack.Screen name="food" />
+          <Stack.Screen name="recipe" />
         </Stack.Protected>
 
         {/* Screens only a logged-out user can open */}
